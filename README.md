@@ -15,7 +15,9 @@ A browser-based version of the classic **Sequence** board game. Connect five chi
 - Single file, no build step
 
 ## Play
-Open `index.html` in a browser.
+Play now: https://manishsongirkar.github.io/sequence/
+
+Or open `index.html` locally in a browser.
 
 ## Test
 ```
