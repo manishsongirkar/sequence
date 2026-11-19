@@ -1,0 +1,315 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Sequence — Online Board Game</title>
+<style>
+:root{--bg:#0b1020;--panel:#141d33;--panel2:#1b2944;--line:#2b3b5d;--text:#eef4ff;--muted:#9eacc8;--blue:#58a6ff;--red:#ff647c;--green:#45d6a2;--gold:#ffd166}
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(ellipse at 50% -15%,#243b65 0,transparent 55%),var(--bg);color:var(--text);font:15px/1.45 system-ui,-apple-system,Segoe UI,Roboto,sans-serif;min-height:100vh}
+button,input{font:inherit}button{cursor:pointer;border:0;border-radius:12px;padding:10px 15px;font-weight:700;color:#071225;background:linear-gradient(135deg,#7cc4ff,#5b9cff);box-shadow:0 6px 18px #0004;transition:.15s}button:hover{filter:brightness(1.08);transform:translateY(-1px)}button:disabled{opacity:.4;cursor:not-allowed;transform:none}
+.ghost{background:#253653;color:var(--text);box-shadow:none;border:1px solid var(--line)}.danger{background:#542b3b;color:#ffe4e9;box-shadow:none}.wrap{max-width:1320px;margin:auto;padding:22px}
+header{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:20px}.brand{display:flex;align-items:center;gap:12px}.logo{width:44px;height:44px;border-radius:14px;display:grid;place-items:center;background:linear-gradient(135deg,#62b6ff,#8a75ff);font-size:24px;box-shadow:0 8px 24px #4e8bff44}.brand h1{font-size:21px;letter-spacing:.08em;margin:0}.brand p{margin:0;color:var(--muted);font-size:12px}.status{display:flex;align-items:center;gap:8px;color:var(--muted);font-size:13px}.dot{width:9px;height:9px;border-radius:50%;background:#7888a7}.dot.on{background:var(--green);box-shadow:0 0 12px #45d6a2}
+.layout{display:grid;grid-template-columns:minmax(0,1fr) 310px;gap:18px;align-items:start}.main,.side{background:#111a2dcc;border:1px solid var(--line);border-radius:20px;box-shadow:0 18px 50px #0003}.main{padding:16px}.side{padding:16px;display:grid;gap:14px}.topline{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:13px}.topline h2{font-size:17px;margin:0}.hint{font-size:12px;color:var(--muted)}
+.board{display:grid;grid-template-columns:repeat(10,minmax(0,1fr));gap:5px;padding:10px;background:linear-gradient(145deg,#18304b,#102139);border:1px solid #36516f;border-radius:16px;max-width:820px;margin:auto;box-shadow:inset 0 2px 18px #0006}
+.cell{position:relative;aspect-ratio:1/1;border-radius:7px;background:linear-gradient(145deg,#f8f3e7,#d8d9d4);color:#17243a;display:flex;align-items:center;justify-content:center;min-width:0;border:1px solid #ffffff70;box-shadow:0 2px 3px #0004;overflow:hidden;padding:0}
+.cell .face{font-family:Georgia,serif;font-weight:800;font-size:clamp(8px,1.1vw,15px);line-height:1.02;text-align:center}.cell .suit{font-size:clamp(10px,1.4vw,18px);display:block}.red-suit{color:#d8324b}.black-suit{color:#1a2637}.cell.corner{background:linear-gradient(145deg,#28415f,#182c46);color:#dceaff;border:1px solid #6b89ae}.corner span{font-size:clamp(8px,1vw,12px);font-weight:800;letter-spacing:.04em}.cell:disabled{cursor:default}.cell.playable{outline:2px solid #ffd166;outline-offset:-2px;animation:pulse 1.4s infinite}.cell.last{box-shadow:0 0 0 3px #fff}.cell:hover:not(:disabled){transform:scale(1.035);z-index:2}.chip{position:absolute;inset:13%;border-radius:50%;border:3px solid #ffffffd9;box-shadow:0 3px 7px #0007}.chip.t0{background:radial-gradient(circle at 35% 25%,#ff9ba8,#dc3154 65%,#8f1834)}.chip.t1{background:radial-gradient(circle at 35% 25%,#a5d8ff,#2878d2 65%,#164477)}.chip.t2{background:radial-gradient(circle at 35% 25%,#a8f0cf,#1fa56f 65%,#12603f)}.chip.sequence{box-shadow:0 0 0 3px var(--gold),0 0 13px #ffd166}
+@keyframes pulse{50%{box-shadow:inset 0 0 0 2px #ffd166,0 0 10px #ffd16666}}
+.cardbox{background:linear-gradient(145deg,#1b2a46,#142139);border:1px solid var(--line);border-radius:16px;padding:13px}.cardbox h3{font-size:13px;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin:0 0 10px}.players{display:grid;gap:8px}.player{display:flex;align-items:center;gap:10px;padding:10px;border:1px solid transparent;border-radius:12px;background:#ffffff06}.player.active{border-color:#ffd16688;background:#ffd16612}.swatch{width:13px;height:13px;border-radius:50%;flex:none;display:inline-block}.swatch.t0{background:var(--red)}.swatch.t1{background:var(--blue)}.swatch.t2{background:var(--green)}.player strong{display:block;font-size:13px}.player small{color:var(--muted);font-size:11px}.player .count{margin-left:auto;font-weight:800;font-size:18px}
+.hand{display:flex;gap:8px;flex-wrap:wrap;min-height:80px}.playing-card{width:55px;height:76px;background:#f7f4ec;color:#1c2638;border-radius:8px;border:2px solid #fff;box-shadow:0 4px 10px #0005;position:relative;display:grid;place-items:center;font-family:Georgia,serif;font-weight:800;font-size:19px;cursor:pointer;padding:0}.playing-card small{position:absolute;left:5px;top:3px;font-size:10px}.playing-card .big{font-size:26px}.playing-card.red{color:#d8324b}.playing-card.selected{outline:3px solid var(--gold);transform:translateY(-5px)}.playing-card.dead{border-style:dashed;border-color:#999}
+.actionrow{display:flex;gap:8px;flex-wrap:wrap}.actionrow button{font-size:12px;padding:8px 10px}.notice{padding:11px 12px;border-radius:12px;background:#0d1729;border:1px solid var(--line);color:#c6d5ee;font-size:13px;min-height:48px}.notice strong{color:white}.muted{color:var(--muted)}.turntag{font-size:12px;color:var(--gold);font-weight:800}.roomline{display:flex;gap:7px}.roomline input,.nameinput{width:100%;min-width:0;background:#0b1425;border:1px solid var(--line);border-radius:10px;padding:10px;color:var(--text);outline:none}.roomline input:focus,.nameinput:focus{border-color:var(--blue)}.roomline button{white-space:nowrap;padding:9px 12px;font-size:12px}.modal{position:fixed;inset:0;background:#050914d9;display:grid;place-items:center;padding:18px;z-index:10}.modal.hidden{display:none}.dialog{width:min(470px,100%);background:#17233b;border:1px solid #3b5278;border-radius:20px;padding:22px;box-shadow:0 24px 80px #0009}.dialog h2{margin:0 0 6px}.dialog p{color:var(--muted);font-size:13px}.dialog label{display:block;font-size:12px;color:#bdcbe3;margin:13px 0 5px}.dialog .row{display:flex;gap:8px;margin-top:16px}.dialog .row button{flex:1}.footer{margin-top:14px;text-align:center;color:#8191af;font-size:11px}
+@media(max-width:900px){.layout{grid-template-columns:1fr}.side{grid-template-columns:repeat(2,minmax(0,1fr))}.side .wide{grid-column:1/-1}}
+@media(max-width:560px){.wrap{padding:12px}.main{padding:8px}.board{gap:3px;padding:5px}.cell{border-radius:4px}.side{grid-template-columns:1fr}.topline{align-items:flex-start;flex-direction:column}.brand h1{font-size:18px}.playing-card{width:49px;height:68px}.chip{border-width:2px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header><div class="brand"><div class="logo">♠</div><div><h1>SEQUENCE</h1><p>CONNECT FIVE. OUTPLAY YOUR OPPONENTS.</p></div></div><div class="status"><span class="dot" id="netDot"></span><span id="netStatus">Not connected</span></div></header>
+<div class="layout">
+<section class="main">
+ <div class="topline"><div><h2>Game board</h2><div class="hint" id="rules">2–4 players. Make 2 sequences (3 players: 1) to win. 4 players play as 2 teams.</div></div><div class="turntag" id="turnLabel">Waiting for players</div></div>
+ <div class="board" id="board" aria-label="Sequence board"></div>
+ <div style="display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;margin:13px 2px 0"><span class="hint">★ Four corners are wild spaces.</span><span class="hint">Two-eyed jack (♦♣): place anywhere. One-eyed jack (♥♠): remove an opponent chip.</span></div>
+</section>
+<aside class="side">
+ <div class="cardbox wide"><h3>Players</h3><div class="players" id="players"></div><div class="hint" id="scores" style="margin-top:8px"></div></div>
+ <div class="cardbox wide"><h3>Your hand</h3><div class="hand" id="hand"><span class="muted" style="font-size:12px">Connect to a room to receive your cards.</span></div><div class="hint" style="margin:8px 0">Select a card, then choose a matching open space. Dashed cards are dead: swap one per turn.</div><div class="actionrow"><button class="ghost" id="swapBtn" disabled>Swap dead card</button></div></div>
+ <div class="cardbox wide"><h3>Online room</h3><label class="hint" for="playerName">Your display name</label><input class="nameinput" id="playerName" maxlength="18" value="Player" style="margin:5px 0 10px">
+  <div class="actionrow"><button id="hostBtn">Create room</button><button class="ghost" id="joinToggle">Join room</button></div>
+  <div class="actionrow" style="margin-top:8px;align-items:center"><button class="ghost" id="botBtn">Play vs computer</button><select id="botCount" class="nameinput" style="width:auto" title="Number of computer opponents"><option value="1">1 opponent</option><option value="2">2 opponents</option><option value="3">3 opponents</option></select></div>
+  <div id="joinArea" style="display:none;margin-top:10px"><div class="hint" style="margin-bottom:5px">Enter the room code</div><div class="roomline"><input id="roomInput" placeholder="Room code"><button id="joinBtn">Join</button></div></div>
+  <div id="roomInfo" class="notice" style="margin-top:10px">Create a room and share its code with up to 3 friends.</div>
+ </div>
+ <div class="cardbox wide"><h3>Game controls</h3><div class="actionrow"><button id="startBtn" disabled>Start game</button><button class="ghost" id="copyBtn" disabled>Copy room code</button><button class="danger" id="leaveBtn" disabled>Leave room</button></div></div>
+ <div class="notice wide" id="message">Create a room to start an online match. The host starts the game once 2–4 players have joined.</div>
+</aside>
+</div>
+<div class="footer">Online peer-to-peer play • 2 to 4 players • Keep this tab open during the match</div>
+</div>
+<div class="modal" id="welcome"><div class="dialog"><h2>Play Sequence online</h2><p>Create a private room and invite up to 3 friends. The host starts the match when everyone has joined.</p><label for="welcomeName">Your name</label><input class="nameinput" id="welcomeName" maxlength="18" value="Player"><div class="row"><button id="welcomeHost">Create a room</button><button class="ghost" id="welcomeJoin">Join a room</button></div><div class="row"><button class="ghost" id="welcomeBot">Play alone vs computer</button></div><p style="margin-bottom:0">Everyone needs an internet connection. No account required.</p></div></div>
+<script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
+<script>
+// ---- Pure game logic (host-authoritative; tested by test.js) ----
+//LOGIC-START
+const SUITS=['♠','♥','♦','♣'],RANKS=['A','2','3','4','5','6','7','8','9','10','Q','K'];
+const isRed=s=>s==='♥'||s==='♦',key=c=>c.r+c.s,isOneEye=c=>c.r==='J'&&(c.s==='♥'||c.s==='♠');
+// 3 players: 3 teams. 2 players: 2 teams. 4 players: 2 teams (seats 0,2 vs 1,3).
+const teamOf=(n,s)=>n===3?s:s%2,teamCount=n=>n===3?3:2,need=n=>n===3?1:2;
+const lockedSet=used=>new Set(used.flatMap(u=>u.cells));
+function shuffle(a){for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}
+function makeBoard(){
+ const cards=[];for(const s of SUITS)for(const r of RANKS)cards.push({r,s});
+ const pairs=shuffle([...cards,...cards]);let n=0;
+ return Array.from({length:100},(_,i)=>{const row=i/10|0,col=i%10;
+  return (row===0||row===9)&&(col===0||col===9)?{corner:true,owner:null}:{card:pairs[n++],owner:null}});
+}
+function makeDeck(){const d=[];for(const s of SUITS)for(const r of [...RANKS,'J']){d.push({r,s});d.push({r,s})}return shuffle(d)}
+function newGame(n){
+ const G={n,board:makeBoard(),deck:makeDeck(),hands:[],turn:0,seq:Array(teamCount(n)).fill(0),winner:null,used:[],discarded:false,last:null};
+ for(let i=0;i<n;i++)G.hands.push(Array.from({length:n===2?7:6},()=>G.deck.pop()));
+ return G;
+}
+function legal(card,cell,idx,team,locked){
+ if(!card||cell.corner)return false;
+ if(card.r!=='J')return cell.owner===null&&key(card)===key(cell.card);
+ if(isOneEye(card))return cell.owner!==null&&cell.owner!==team&&!locked.has(idx);
+ return cell.owner===null;
+}
+const isDead=(card,board)=>card.r!=='J'&&!board.some(c=>!c.corner&&c.owner===null&&key(c.card)===key(card));
+// Claim new 5-in-a-row through idx (one per direction). Two sequences may share at most one chip.
+function claimSeqs(G,idx,team){
+ const r0=idx/10|0,c0=idx%10,D=[[0,1],[1,0],[1,1],[1,-1]];let got=0;
+ const mine=(r,c)=>r>=0&&r<10&&c>=0&&c<10&&(G.board[r*10+c].corner||G.board[r*10+c].owner===team);
+ for(const [dr,dc] of D){
+  const line=[idx];let p=0;
+  for(let k=1;mine(r0+dr*k,c0+dc*k);k++)line.push((r0+dr*k)*10+c0+dc*k);
+  for(let k=1;mine(r0-dr*k,c0-dc*k);k++){line.unshift((r0-dr*k)*10+c0-dc*k);p++}
+  for(let s=Math.max(0,p-4);s<=p&&s+5<=line.length;s++){
+   const w=line.slice(s,s+5);
+   if(G.used.every(u=>u.team!==team||u.cells.filter(x=>w.includes(x)).length<=1)){G.used.push({team,cells:w});got++;break}
+  }
+ }
+ return got;
+}
+function play(G,seat,ci,idx){
+ if(G.winner!==null||seat!==G.turn)return false;
+ const card=G.hands[seat][ci],cell=G.board[idx],team=teamOf(G.n,seat);
+ if(!cell||!legal(card,cell,idx,team,lockedSet(G.used)))return false;
+ if(isOneEye(card))cell.owner=null;
+ else{cell.owner=team;G.seq[team]+=claimSeqs(G,idx,team);if(G.seq[team]>=need(G.n))G.winner=team}
+ G.hands[seat].splice(ci,1);if(G.deck.length)G.hands[seat].push(G.deck.pop());
+ G.last={seat,idx,card};G.discarded=false;return true;
+}
+function swap(G,seat,ci){
+ const card=G.hands[seat][ci];
+ if(G.winner!==null||seat!==G.turn||G.discarded||!card||!G.deck.length||!isDead(card,G.board))return false;
+ G.hands[seat][ci]=G.deck.pop();G.discarded=true;return true;
+}
+function nextTurn(G,gone){for(let k=1;k<=G.n;k++){const t=(G.turn+k)%G.n;if(!gone[t]){G.turn=t;break}}G.discarded=false}
+function lineScore(board,idx,own){
+ let s=0;const r0=idx/10|0,c0=idx%10;
+ for(const [dr,dc] of [[0,1],[1,0],[1,1],[1,-1]]){let len=1;
+  for(const sg of [1,-1])for(let k=1;;k++){const r=r0+dr*k*sg,c=c0+dc*k*sg;if(r<0||r>9||c<0||c>9)break;const x=board[r*10+c];if(!(x.corner||own(x)))break;len++}
+  s+=len*len}
+ return s;
+}
+// Computer player: greedy. Extend own lines, block opponents, save jacks for good moves. Returns {ci,idx} | {swap:ci} | null (pass).
+function botChoose(G,seat){
+ const team=teamOf(G.n,seat),locked=lockedSet(G.used);let best=null,bs=-1e9;
+ G.hands[seat].forEach((card,ci)=>G.board.forEach((cell,idx)=>{
+  if(!legal(card,cell,idx,team,locked))return;
+  let s=isOneEye(card)?lineScore(G.board,idx,x=>x.owner===cell.owner)*.7-3
+   :lineScore(G.board,idx,x=>x.owner===team)+.4*lineScore(G.board,idx,x=>x.owner!==null&&x.owner!==team);
+  if(card.r==='J')s-=6;
+  s+=Math.random()*.5;
+  if(s>bs){bs=s;best={ci,idx}}
+ }));
+ if(best)return best;
+ const d=G.hands[seat].findIndex(c=>isDead(c,G.board));
+ return !G.discarded&&d>=0&&G.deck.length?{swap:d}:null;
+}
+function viewFor(G,seat,names,gone){
+ return {n:G.n,seat,names,gone,board:G.board,turn:G.turn,seq:G.seq,winner:G.winner,used:G.used,last:G.last,discarded:G.discarded,counts:G.hands.map(h=>h.length),hand:G.hands[seat]};
+}
+//LOGIC-END
+
+// ---- UI + networking ----
+const $=id=>document.getElementById(id);
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+let peer=null,conn=null,isHost=false,roomCode='',connected=false,selected=null,myName='Player';
+let local=false,botT=null;
+let G=null,players=[];          // host only: authoritative state; players[0] is the host
+let view=null,lobby=null;       // what this client renders
+const boardEl=$('board'),seatNo=()=>view?view.seat:(lobby?lobby.seat:0);
+const isMyTurn=()=>!!view&&view.turn===view.seat&&view.winner===null&&connected;
+const setMessage=t=>$('message').textContent=t;
+function setNetwork(t,on){$('netStatus').textContent=t;$('netDot').classList.toggle('on',!!on)}
+const cleanName=s=>String(s||'').trim().slice(0,18)||'Player';
+
+function renderBoard(){
+ boardEl.innerHTML='';if(!view)return;
+ const team=teamOf(view.n,view.seat),locked=lockedSet(view.used),card=selected!=null?view.hand[selected]:null;
+ view.board.forEach((cell,i)=>{
+  const b=document.createElement('button');b.className='cell';b.type='button';
+  if(cell.corner){b.classList.add('corner');b.innerHTML='<span>WILD<br>★</span>';b.disabled=true}
+  else{
+   const c=cell.card;b.innerHTML=`<span class="face">${c.r}<span class="suit ${isRed(c.s)?'red-suit':'black-suit'}">${c.s}</span></span>`;
+   const ok=isMyTurn()&&legal(card,cell,i,team,locked);
+   if(ok)b.classList.add('playable');
+   if(view.last&&view.last.idx===i)b.classList.add('last');
+   if(cell.owner!==null){const chip=document.createElement('span');chip.className='chip t'+cell.owner+(locked.has(i)?' sequence':'');b.appendChild(chip)}
+   b.disabled=!ok;b.onclick=()=>playAt(i);
+  }
+  boardEl.appendChild(b);
+ });
+}
+function renderPlayers(){
+ const v=view||lobby,names=v?v.names:[],n=names.length,me=seatNo();
+ $('players').innerHTML=names.map((nm,i)=>{const t=teamOf(n,i);
+  return `<div class="player ${view&&view.turn===i&&view.winner===null?'active':''}"><span class="swatch t${t}"></span><div><strong>${esc(nm)}</strong><small>${i===me?'You':'Player '+(i+1)}${n===4?' · Team '+(t+1):''}${v.gone[i]?' · left':''}</small></div><span class="count" title="Cards in hand">${view?view.counts[i]:''}</span></div>`}).join('')||'<span class="hint">No players yet.</span>';
+ $('scores').innerHTML=view?'Sequences: '+view.seq.map((s,t)=>`<span class="swatch t${t}"></span> ${s}`).join(' &nbsp; '):'';
+ let t='Waiting for players';
+ if(view){const w=view.winner,tm=teamOf(view.n,view.seat);
+  t=w!==null?(w===tm?'YOU WIN!':(view.n===4?'TEAM '+(w+1):view.names[w].toUpperCase())+' WINS'):(isMyTurn()||view.turn===view.seat?'YOUR TURN':view.names[view.turn].toUpperCase()+'’S TURN')}
+ $('turnLabel').textContent=t;
+}
+function renderHand(){
+ const h=$('hand'),card=view&&selected!=null?view.hand[selected]:null;
+ if(!view){h.innerHTML='<span class="muted" style="font-size:12px">Connect to a room to receive your cards.</span>';$('swapBtn').disabled=true;return}
+ h.innerHTML='';
+ view.hand.forEach((c,i)=>{const b=document.createElement('button');
+  b.className='playing-card '+(isRed(c.s)?'red':'')+(isDead(c,view.board)?' dead':'')+(selected===i?' selected':'');
+  b.innerHTML=`<small>${c.r}${c.s}</small><span class="big">${c.s}</span>`;b.disabled=!isMyTurn();b.onclick=()=>{selected=i;render()};h.appendChild(b)});
+ $('swapBtn').disabled=!(isMyTurn()&&card&&!view.discarded&&isDead(card,view.board));
+}
+function statusText(){
+ if(!view)return isHost?(players.length<2?'Waiting for players… share the room code.':`${players.length} players ready. Press Start game.`):'Connected. Waiting for the host to start.';
+ const l=view.last,pre=l?`${view.names[l.seat]} played ${l.card.r}${l.card.s}. `:'';
+ return pre+(view.winner!==null?'Game over.':view.turn===view.seat?'Your turn. Select a card.':`Waiting for ${view.names[view.turn]}.`);
+}
+function render(){
+ renderPlayers();renderHand();renderBoard();
+ $('startBtn').disabled=!(isHost&&connected&&players.length>=2);$('startBtn').textContent=G?'New game':'Start game';
+ $('copyBtn').disabled=!roomCode;$('leaveBtn').disabled=!(peer||local);
+}
+function update(){render();if(peer||local)setMessage(statusText())}
+
+// Host: send each guest their own view (other hands stay hidden).
+function hostSync(){
+ const names=players.map(p=>p.name),gone=players.map(p=>!!p.gone);
+ players.forEach((p,i)=>{if(i&&!p.gone&&p.conn?.open)p.conn.send(G?{type:'state',view:viewFor(G,i,names,gone)}:{type:'lobby',names,gone,seat:i})});
+ view=G?viewFor(G,0,names,gone):null;lobby={names,gone,seat:0};update();
+ clearTimeout(botT);if(G&&G.winner===null&&players[G.turn]?.bot)botT=setTimeout(botTurn,900);
+}
+function botTurn(){
+ if(!G||G.winner!==null||!players[G.turn]?.bot)return;
+ const seat=G.turn,m=botChoose(G,seat);
+ if(!m){nextTurn(G,players.map(p=>!!p.gone));hostSync();return} // no legal move: pass
+ hostAct(seat,m.swap!==undefined?{type:'swap',ci:m.swap}:{type:'move',ci:m.ci,idx:m.idx});
+}
+function playLocal(){
+ myName=cleanName($('playerName').value);reset();isHost=local=true;connected=true;
+ const k=+$('botCount').value||1;
+ players=[{name:myName},...Array.from({length:k},(_,i)=>({name:'Computer '+(i+1),bot:true}))];
+ setNetwork('Playing vs computer',true);$('roomInfo').textContent=`Playing against ${k} computer player${k>1?'s':''}. No internet needed.`;
+ startGame();
+}
+function hostAct(i,d){
+ if(!G)return;
+ if(d.type==='move'){if(play(G,i,d.ci,d.idx)&&G.winner===null)nextTurn(G,players.map(p=>!!p.gone))}
+ else if(d.type==='swap')swap(G,i,d.ci);
+ hostSync();
+}
+function startGame(){
+ players=players.filter(p=>!p.gone);
+ if(players.length<2){setMessage('Need at least 2 players.');return}
+ G=newGame(players.length);selected=null;hostSync();
+}
+function onGuestConn(c){
+ let joined=false;
+ c.on('data',d=>{
+  if(!d)return;
+  if(d.type==='join'&&!joined){
+   joined=true;const name=cleanName(d.name),tok=String(d.token||'').slice(0,40);
+   // Rejoin: same token, or (mid-game) a departed seat with the same name.
+   let i=players.findIndex((p,k)=>k&&tok&&p.token===tok);
+   if(i<0&&G)i=players.findIndex((p,k)=>k&&p.gone&&p.name===name);
+   if(i>0){const old=players[i].conn;Object.assign(players[i],{conn:c,gone:false,name,token:tok});try{old.close()}catch{}hostSync();return}
+   if(G||players.length>=4){c.send({type:'full',reason:G?'Game already started. Use the same name you played with to rejoin.':'Room is full (4 players).'});setTimeout(()=>c.close(),500);return}
+   players.push({name,token:tok,conn:c});hostSync();return;
+  }
+  const i=players.findIndex(p=>p.conn===c);if(i>0)hostAct(i,d);
+ });
+ c.on('close',()=>{
+  const i=players.findIndex(p=>p.conn===c);if(i<1)return;
+  if(G){players[i].gone=true;if(G.turn===i&&G.winner===null)nextTurn(G,players.map(p=>!!p.gone))}else players.splice(i,1);
+  hostSync();
+ });
+}
+function reset(){
+ clearTimeout(botT);local=false;
+ try{conn?.close()}catch{}players.forEach(p=>{try{p.conn?.close()}catch{}});try{peer?.destroy()}catch{}
+ peer=conn=null;connected=false;G=null;players=[];view=lobby=null;selected=null;roomCode='';setNetwork('Not connected',false);
+}
+// STUN only by default. If players behind strict NATs/firewalls cannot connect, add your own TURN server here
+// (free tiers: metered.ca, Cloudflare Calls), e.g. {urls:'turn:host:443',username:'u',credential:'p'}
+const TURN=[];
+const PEER_OPTS={debug:1,config:{iceServers:[{urls:'stun:stun.l.google.com:19302'},{urls:'stun:stun1.l.google.com:19302'},{urls:'stun:stun.cloudflare.com:3478'},...TURN]}};
+const myToken=(()=>{try{let t=sessionStorage.seqTok;if(!t)t=sessionStorage.seqTok=Math.random().toString(36).slice(2)+Date.now().toString(36);return t}catch{return Math.random().toString(36).slice(2)}})();
+const CODE_CHARS='ABCDEFGHJKLMNPQRSTUVWXYZ23456789',PREFIX='seqgame-';
+function becomeHost(){
+ myName=cleanName($('playerName').value);reset();isHost=true;
+ const code=Array.from({length:5},()=>CODE_CHARS[Math.random()*CODE_CHARS.length|0]).join('');
+ setNetwork('Creating room…',false);setMessage('Connecting to the room service…');
+ peer=new Peer(PREFIX+code,PEER_OPTS);
+ peer.on('open',()=>{roomCode=code;connected=true;players=[{name:myName}];setNetwork('Room ready · waiting',true);
+  $('roomInfo').innerHTML=`Room code: <strong style="color:#ffd166;letter-spacing:.08em">${esc(code)}</strong><br><span class="hint">Share it with up to 3 friends.</span>`;hostSync()});
+ peer.on('connection',onGuestConn);
+ peer.on('disconnected',()=>{try{peer.reconnect()}catch{}}); // keep the room code reachable
+ peer.on('error',e=>{if(e.type==='unavailable-id'){becomeHost();return}setNetwork('Connection error',false);setMessage('Connection error: '+e.type+'. Please try again.')});
+}
+function joinRoom(raw){
+ const code=raw.trim().toUpperCase();if(!code){setMessage('Enter a room code first.');return}
+ myName=cleanName($('playerName').value);reset();isHost=false;roomCode=code;
+ setNetwork('Joining room…',false);setMessage('Connecting to host…');peer=new Peer(undefined,PEER_OPTS);
+ // The WebRTC link can fail intermittently, so retry a few times with a fresh connection.
+ const attempt=n=>{
+  const c=conn=peer.connect(PREFIX+code,{reliable:true,serialization:'json'});
+  const timer=setTimeout(()=>{
+   if(connected||c!==conn||!peer)return;
+   try{c.close()}catch{}
+   if(n<4){setMessage(`Still connecting… retry ${n}/3`);attempt(n+1)}
+   else{setNetwork('Unable to join',false);setMessage('Could not connect to the host. Check the code, make sure the host tab is open, then press Join again. If it keeps failing, the network is blocking direct connections (see the TURN note in index.html).')}
+  },8000);
+  c.on('open',()=>{clearTimeout(timer);connected=true;setNetwork('Connected to host',true);try{localStorage.seqRoom=code}catch{}$('roomInfo').textContent='Connected to room '+code;c.send({type:'join',name:myName,token:myToken});update()});
+  c.on('data',d=>{
+   if(d.type==='lobby'){lobby=d;view=null;update()}
+   else if(d.type==='state'){view=d.view;selected=null;update()}
+   else if(d.type==='full'){setMessage(d.reason);reset();render()}
+  });
+  c.on('close',()=>{clearTimeout(timer);if(!peer||!connected||c!==conn)return;connected=false;setNetwork('Host disconnected',false);setMessage('Disconnected from the host. Press Join with the same room code to rejoin.');render()});
+ };
+ peer.on('open',()=>{setMessage('Contacting host…');attempt(1)});
+ peer.on('error',e=>{setNetwork('Unable to join',false);setMessage(e.type==='peer-unavailable'?'Room not found. Check the code and that the host tab is open.':'Could not join room ('+e.type+').')});
+}
+function playAt(i){
+ if(!isMyTurn()||selected==null)return;
+ const m={type:'move',ci:selected,idx:i};selected=null;
+ isHost?hostAct(0,m):conn.send(m);
+}
+$('swapBtn').onclick=()=>{if(selected==null)return;const m={type:'swap',ci:selected};selected=null;isHost?hostAct(0,m):conn.send(m)};
+$('startBtn').onclick=startGame;
+$('botBtn').onclick=playLocal;
+$('hostBtn').onclick=becomeHost;
+$('joinToggle').onclick=()=>{$('joinArea').style.display=$('joinArea').style.display==='none'?'block':'none'};
+$('joinBtn').onclick=()=>joinRoom($('roomInput').value);
+$('copyBtn').onclick=()=>{navigator.clipboard?.writeText(roomCode).then(()=>setMessage('Room code copied. Send it to your friends.')).catch(()=>setMessage('Room code: '+roomCode))};
+$('leaveBtn').onclick=()=>{reset();$('roomInfo').textContent='You left the room. Create or join another room to play.';setMessage('Disconnected.');render()};
+$('welcomeHost').onclick=()=>{$('playerName').value=$('welcomeName').value;$('welcome').classList.add('hidden');becomeHost()};
+$('welcomeBot').onclick=()=>{$('playerName').value=$('welcomeName').value;$('welcome').classList.add('hidden');playLocal()};
+$('welcomeJoin').onclick=()=>{$('playerName').value=$('welcomeName').value;$('welcome').classList.add('hidden');$('joinArea').style.display='block';$('roomInput').focus()};
+$('welcomeName').addEventListener('keydown',e=>{if(e.key==='Enter')$('welcomeHost').click()});
+try{if(localStorage.seqRoom)$('roomInput').value=localStorage.seqRoom}catch{}
+render();
+</script>
+</body></html>
