@@ -2,6 +2,11 @@
 
 A browser-based version of the classic **Sequence** board game. Connect five chips in a row, outplay your opponents, and play online with friends or alone against the computer.
 
+## Screenshots
+![Welcome screen](screenshots/welcome.png)
+![Game in progress vs computer](screenshots/gameplay.png)
+<img src="screenshots/mobile.png" alt="Mobile layout" width="300">
+
 ## Features
 - 2–4 players (4 players play as 2 teams)
 - Online peer-to-peer rooms with a room code, no account needed
